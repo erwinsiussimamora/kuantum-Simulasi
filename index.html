@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Quantum Analytics Pro - v4.5 Data Axis</title>
+    <title>Quantum Analytics Pro - Kelompok 1</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     
     <style>
         :root {
@@ -15,7 +17,7 @@
             --border: rgba(0, 242, 255, 0.2);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background: var(--bg); color: white; height: 100vh; overflow: hidden; position: fixed; width: 100%; }
 
         /* --- START SCREEN --- */
@@ -23,124 +25,145 @@
             position: fixed; inset: 0;
             background: radial-gradient(circle at center, #0a0a25 0%, #020205 100%);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 999; transition: 0.5s;
+            z-index: 999; text-align: center;
         }
-        #start-screen.hidden { opacity: 0; visibility: hidden; }
-        .logo-container h1 { font-size: 2.5rem; letter-spacing: 5px; color: var(--accent); text-shadow: 0 0 20px var(--accent); text-align: center; }
+        #start-screen.hidden { opacity: 0; visibility: hidden; transition: 0.5s; }
+        .logo-container h1 { font-size: 2.8rem; letter-spacing: 8px; color: var(--accent); text-shadow: 0 0 20px var(--accent); }
+        .logo-container p { color: #555; font-size: 0.8rem; margin-top: 10px; letter-spacing: 2px; }
 
         /* --- MAIN APP UI --- */
         #main-app { display: flex; flex-direction: column; height: 100vh; visibility: hidden; }
         #main-app.visible { visibility: visible; }
 
-        header { padding: 10px; text-align: center; border-bottom: 1px solid var(--border); font-size: 0.8rem; background: rgba(0,0,0,0.5); }
-        nav { display: flex; justify-content: center; gap: 5px; padding: 10px; overflow-x: auto; white-space: nowrap; }
+        header { padding: 12px; text-align: center; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.8); }
+        nav { display: flex; justify-content: center; gap: 8px; padding: 10px; background: rgba(255,255,255,0.02); border-bottom: 1px solid var(--border); }
         
         .tab-btn {
-            padding: 8px 12px; background: transparent; border: 1px solid var(--border);
-            color: #666; border-radius: 5px; cursor: pointer; font-size: 0.7rem; font-weight: bold;
+            padding: 10px 15px; background: transparent; border: 1px solid var(--border);
+            color: #555; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: bold; transition: 0.3s;
         }
         .tab-btn.active { color: var(--accent); border-color: var(--accent); background: rgba(0, 242, 255, 0.1); }
 
-        .main-content { display: flex; flex: 1; padding: 10px; gap: 10px; overflow: hidden; flex-direction: column; }
+        .main-content { display: flex; flex: 1; padding: 15px; gap: 15px; overflow: hidden; flex-direction: column; }
         @media (min-width: 768px) { .main-content { flex-direction: row; } }
 
-        .sidebar { width: 100%; display: flex; flex-direction: column; gap: 10px; }
-        @media (min-width: 768px) { .sidebar { width: 280px; } }
+        .sidebar { width: 100%; display: flex; flex-direction: column; gap: 15px; }
+        @media (min-width: 768px) { .sidebar { width: 320px; } }
 
-        /* --- CANVAS & AXIS AREA --- */
+        .glass-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 12px; padding: 18px; position: relative; }
+        
+        /* Math Display Area */
+        .math-box { 
+            margin: 15px 0; padding: 12px; background: rgba(0,0,0,0.4); 
+            border-left: 3px solid var(--accent); border-radius: 4px;
+            font-size: 0.9rem; min-height: 60px; display: flex; align-items: center; justify-content: center;
+        }
+
         .canvas-area { 
-            flex: 1; position: relative; background: #000; border-radius: 15px; 
+            flex: 1; position: relative; background: #000; border-radius: 12px; 
             border: 1px solid var(--border); overflow: hidden; display: flex; flex-direction: column;
         }
 
-        .axis-y { 
-            position: absolute; left: 5px; top: 0; bottom: 30px; width: 30px; 
-            display: flex; flex-direction: column; justify-content: space-between; 
-            font-size: 0.6rem; color: #444; padding: 10px 0; pointer-events: none; z-index: 5;
-        }
+        .viz-container { flex: 1; position: relative; cursor: crosshair; touch-action: none; margin-left: 40px; margin-bottom: 30px; }
+        .axis-label { font-size: 0.6rem; color: #444; position: absolute; pointer-events: none; z-index: 5; font-family: monospace; }
+        .axis-y { left: 8px; top: 10px; bottom: 35px; display: flex; flex-direction: column; justify-content: space-between; }
+        .axis-x { bottom: 8px; left: 45px; right: 15px; display: flex; justify-content: space-between; }
 
-        .axis-x { 
-            position: absolute; bottom: 5px; left: 35px; right: 10px; height: 20px; 
-            display: flex; justify-content: space-between; 
-            font-size: 0.6rem; color: #444; pointer-events: none; z-index: 5;
-        }
+        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .data-box { background: rgba(0,0,0,0.5); padding: 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); }
+        .data-label { font-size: 0.55rem; color: #777; margin-bottom: 4px; }
+        .data-value { font-size: 0.85rem; color: var(--accent); font-family: 'Courier New', monospace; font-weight: bold; }
 
-        .viz-container { flex: 1; position: relative; cursor: crosshair; touch-action: none; margin-left: 35px; margin-bottom: 25px; }
-        .glass-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 10px; padding: 15px; }
+        /* Kelompok 1 Watermark */
+        .watermark { position: absolute; bottom: 40px; right: 15px; font-size: 0.7rem; color: rgba(0, 242, 255, 0.3); font-weight: bold; letter-spacing: 2px; pointer-events: none; text-transform: uppercase; }
 
-        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-        .data-box { background: rgba(0,0,0,0.4); padding: 8px; border-radius: 5px; border: 1px solid rgba(255,255,255,0.05); }
-        .data-label { font-size: 0.55rem; color: #888; text-transform: uppercase; }
-        .data-value { font-size: 0.8rem; color: var(--accent); font-family: monospace; }
-
-        .handle { position: absolute; width: 40px; height: 40px; border: 2px solid white; border-radius: 50%; background: rgba(0, 242, 255, 0.2); z-index: 100; touch-action: none; left: 50%; transform: translateX(-50%); }
+        .handle { position: absolute; width: 44px; height: 44px; border: 2px solid white; border-radius: 50%; background: rgba(0, 242, 255, 0.2); z-index: 100; left: 50%; transform: translateX(-50%); cursor: ns-resize; box-shadow: 0 0 15px rgba(255,255,255,0.2); }
         .energy-line { position: absolute; width: 100%; height: 2px; left: 0; pointer-events: none; }
         
-        #btn-charge { width: 100%; padding: 12px; background: var(--gold); border: none; border-radius: 8px; font-weight: bold; margin-top: 10px; touch-action: none; color: #000; }
+        #btn-charge { width: 100%; padding: 14px; background: var(--gold); border: none; border-radius: 8px; font-weight: bold; margin-top: 15px; cursor: pointer; color: #000; text-transform: uppercase; }
         canvas { position: absolute; top: 0; left: 0; pointer-events: none; }
+        .desc-text { font-size: 0.75rem; color: #aaa; line-height: 1.4; margin-top: 8px; }
     </style>
 </head>
 <body>
 
 <div id="start-screen">
     <div class="logo-container">
-        <h1>QUANTUM HUB</h1>
-        <p>LABORATORY INTERFACE</p>
+        <h1>QUANTUM ANALYTICS</h1>
+        <p>POWERED BY KELOMPOK 1</p>
     </div>
-    <button class="btn-start" onclick="initLab()" style="margin-top: 30px; padding: 12px 30px; border: 1px solid var(--accent); color: var(--accent); background: none; border-radius: 20px; cursor: pointer;">INITIALIZE SYSTEM</button>
+    <button onclick="initLab()" style="margin-top: 40px; padding: 15px 40px; border: 2px solid var(--accent); color: var(--accent); background: none; border-radius: 50px; cursor: pointer; font-weight: bold; transition: 0.3s;">MULAI SIMULASI</button>
 </div>
 
 <div id="main-app">
-    <header>QUANTUM ANALYTICS PRO <span style="color:var(--accent)">v4.5</span></header>
+    <header>
+        <h2 style="font-size: 1rem; letter-spacing: 2px;">SYSTEM INTERFACE <span style="color:var(--accent)">KELOMPOK 1</span></h2>
+    </header>
+
     <nav>
-        <button class="tab-btn active" onclick="switchTab('kinetic', this)">KINETIC</button>
-        <button class="tab-btn" onclick="switchTab('wave', this)">WAVE</button>
-        <button class="tab-btn" onclick="switchTab('tunnel', this)">TUNNELING</button>
+        <button class="tab-btn active" onclick="switchTab('kinetic', this)">1. KINETIC SPLITTING</button>
+        <button class="tab-btn" onclick="switchTab('wave', this)">2. WAVE FUNCTION</button>
+        <button class="tab-btn" onclick="switchTab('tunnel', this)">3. TUNNEL EFFECT</button>
     </nav>
 
     <div class="main-content">
         <div class="sidebar">
             <div class="glass-card">
-                <h3 id="panel-title" style="font-size: 0.8rem; color: var(--accent);">REAL-TIME DATA</h3>
+                <h3 id="panel-title" style="font-size: 0.9rem; color: var(--accent);">KINETIC ANALYSIS</h3>
+                
+                <div class="math-box" id="math-display">
+                    \[ E_n = -\frac{me^4}{8h^2\epsilon_0^2 n^2} \]
+                </div>
+
+                <p id="panel-desc" class="desc-text">Mengukur pemisahan tingkat energi akibat gangguan eksternal pada sistem partikel.</p>
+                
                 <div class="data-grid">
-                    <div class="data-box"><div class="data-label">E-Upper (eV)</div><div id="val-1" class="data-value">13.60</div></div>
-                    <div class="data-box"><div class="data-label">E-Lower (eV)</div><div id="val-2" class="data-value">13.60</div></div>
-                    <div class="data-box"><div class="data-label">Status</div><div id="val-state" class="data-value">Stable</div></div>
-                    <div class="data-box"><div class="data-label">System Val</div><div id="val-res" class="data-value">0.00</div></div>
+                    <div class="data-box"><div class="data-label">UPPER LEVEL</div><div id="val-1" class="data-value">13.60 eV</div></div>
+                    <div class="data-box"><div class="data-label">LOWER LEVEL</div><div id="val-2" class="data-value">13.60 eV</div></div>
+                    <div class="data-box"><div class="data-label">SYSTEM STATE</div><div id="val-state" class="data-value">Stable</div></div>
+                    <div class="data-box"><div class="data-label">DELTA ENERGY</div><div id="val-res" class="data-value">0.00 eV</div></div>
                 </div>
-                <div id="wave-controls" style="display:none; margin-top:10px;">
-                    <label style="font-size: 0.6rem; color: #666;">SUPERPOSITION RATIO</label>
-                    <input type="range" id="mix-slider" style="width:100%;" min="0" max="100" value="50">
+
+                <div id="wave-ui" style="display:none; margin-top:15px;">
+                    <label style="font-size: 0.65rem; color: #888;">SUPERPOSITION MIXING (%)</label>
+                    <input type="range" id="mix-slider" style="width:100%; margin-top:8px;" min="0" max="100" value="50">
                 </div>
-                <button id="btn-charge" style="display:none;">ACTIVATE INJECTION</button>
+
+                <div id="tunnel-ui" style="display:none; margin-top:10px;">
+                    <button id="btn-charge">INJECT ENERGY</button>
+                </div>
+            </div>
+
+            <div class="glass-card" style="padding: 12px;">
+                <p style="font-size: 0.6rem; color: #666; text-transform: uppercase;">Status Proyek</p>
+                <p style="font-size: 0.75rem; color: #44ff44;">● Kelompok 1 Online</p>
             </div>
         </div>
 
         <div class="canvas-area">
-            <div class="axis-y">
-                <span>20.0</span><span>15.0</span><span>10.0</span><span>5.0</span><span>0.0</span>
+            <div class="axis-label axis-y">
+                <span>20.0 eV</span><span>15.0</span><span>10.0</span><span>5.0</span><span>0.0 eV</span>
             </div>
 
             <div class="viz-container" id="viz-box">
                 <div style="position:absolute; width:100%; height:100%; background-image: radial-gradient(var(--grid) 1px, transparent 1px); background-size: 40px 40px;"></div>
-                
                 <canvas id="mainCanvas"></canvas>
-                
                 <div id="viz-kinetic">
-                    <div id="line-up" class="energy-line" style="background:var(--danger); top:50%;"></div>
-                    <div id="line-down" class="energy-line" style="background:var(--accent); top:50%;"></div>
-                    <div id="drag-handle" class="handle" style="top:calc(50% - 20px);"></div>
+                    <div id="line-up" class="energy-line" style="background:var(--danger); top:50%; box-shadow: 0 0 10px var(--danger);"></div>
+                    <div id="line-down" class="energy-line" style="background:var(--accent); top:50%; box-shadow: 0 0 10px var(--accent);"></div>
+                    <div id="drag-handle" class="handle" style="top:calc(50% - 22px);"></div>
                 </div>
-
                 <div id="tunnel-extras" style="display:none;">
-                    <div style="position:absolute; width:15%; height:100%; background:rgba(255,0,123,0.1); border-left: 1px dashed var(--danger); border-right: 1px dashed var(--danger); left:50%; transform:translateX(-50%);"></div>
-                    <div id="tunnel-particle" style="position:absolute; width:12px; height:12px; background:var(--gold); border-radius:50%; left:10%; top:50%; box-shadow: 0 0 10px var(--gold);"></div>
+                    <div style="position:absolute; width:15%; height:100%; background:rgba(255,0,123,0.05); border-left: 1px dashed var(--danger); border-right: 1px dashed var(--danger); left:50%; transform:translateX(-50%);"></div>
+                    <div id="tunnel-particle" style="position:absolute; width:14px; height:14px; background:var(--gold); border-radius:50%; left:10%; top:50%;"></div>
                 </div>
             </div>
 
-            <div class="axis-x">
-                <span>0.0 nm</span><span>0.2</span><span>0.4</span><span>0.6</span><span>0.8</span><span>1.0 nm</span>
+            <div class="axis-label axis-x">
+                <span>0.0 nm</span><span>0.2</span><span>0.4 (Center)</span><span>0.6</span><span>0.8</span><span>1.0 nm</span>
             </div>
+
+            <div class="watermark">DEVELOPED BY KELOMPOK 1</div>
         </div>
     </div>
 </div>
@@ -153,13 +176,22 @@
     const handle = document.getElementById('drag-handle');
     let isDragging = false;
 
+    const descriptions = {
+        kinetic: "Mengukur pemisahan tingkat energi akibat gangguan eksternal pada sistem partikel.",
+        wave: "Visualisasi superposisi gelombang kuantum berdasarkan interferensi dua probabilitas.",
+        tunnel: "Efek Tunneling: Partikel menembus penghalang yang secara klasik tidak mungkin dilewati."
+    };
+
+    const formulas = {
+        kinetic: "\\[ E_n = -\\frac{me^4}{8h^2\\epsilon_0^2 n^2} \\]",
+        wave: "\\[ \\Psi(x,t) = A e^{i(kx - \\omega t)} \\]",
+        tunnel: "\\[ T \\approx e^{-2kL} \\]"
+    };
+
     function initLab() {
         document.getElementById('start-screen').classList.add('hidden');
         document.getElementById('main-app').classList.add('visible');
-        setTimeout(() => {
-            resizeCanvas();
-            renderLoop();
-        }, 100);
+        setTimeout(() => { resizeCanvas(); renderLoop(); }, 100);
     }
 
     function resizeCanvas() {
@@ -172,29 +204,36 @@
         activeTab = mode;
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
+        
         document.getElementById('viz-kinetic').style.display = (mode === 'kinetic') ? 'block' : 'none';
-        document.getElementById('wave-controls').style.display = (mode === 'wave') ? 'block' : 'none';
-        document.getElementById('btn-charge').style.display = (mode === 'tunnel') ? 'block' : 'none';
+        document.getElementById('wave-ui').style.display = (mode === 'wave') ? 'block' : 'none';
+        document.getElementById('tunnel-ui').style.display = (mode === 'tunnel') ? 'block' : 'none';
         document.getElementById('tunnel-extras').style.display = (mode === 'tunnel') ? 'block' : 'none';
+        
+        document.getElementById('panel-title').innerText = mode.toUpperCase() + " ANALYSIS";
+        document.getElementById('panel-desc').innerText = descriptions[mode];
+        
+        // Update Rumus
+        document.getElementById('math-display').innerHTML = formulas[mode];
+        MathJax.typeset();
+        
         resizeCanvas();
     }
 
-    // --- KINETIC LOGIC ---
+    // Logic drag kinetic, render wave, dan tunneling tetap sama dengan versi sebelumnya
     function handleMove(e) {
         if (!isDragging || activeTab !== 'kinetic') return;
         const rect = vizBox.getBoundingClientRect();
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
         let y = Math.max(0, Math.min(rect.height, clientY - rect.top));
-        
-        handle.style.top = (y - 20) + 'px';
+        handle.style.top = (y - 22) + 'px';
         const dist = Math.abs(rect.height/2 - y);
         document.getElementById('line-up').style.top = (rect.height/2 - dist) + 'px';
         document.getElementById('line-down').style.top = (rect.height/2 + dist) + 'px';
-        
         const gap = (dist/10).toFixed(2);
         document.getElementById('val-res').innerText = gap + " eV";
-        document.getElementById('val-1').innerText = (13.6 + gap/2).toFixed(2);
-        document.getElementById('val-2').innerText = (13.6 - gap/2).toFixed(2);
+        document.getElementById('val-1').innerText = (13.6 + gap/2).toFixed(2) + " eV";
+        document.getElementById('val-2').innerText = (13.6 - gap/2).toFixed(2) + " eV";
         document.getElementById('val-state').innerText = gap > 2 ? "Perturbed" : "Stable";
     }
 
@@ -205,72 +244,44 @@
     window.addEventListener('mousemove', handleMove);
     window.addEventListener('touchmove', (e) => { handleMove(e); if(isDragging) e.preventDefault(); }, { passive: false });
 
-    // --- WAVE ENGINE ---
     function renderLoop() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
         if (activeTab === 'wave') {
             const mix = document.getElementById('mix-slider').value / 100;
             const time = Date.now() * 0.003;
-            
             ctx.beginPath();
             ctx.strokeStyle = "#00f2ff";
-            ctx.lineWidth = 2;
-            ctx.shadowBlur = 8;
-            ctx.shadowColor = "#00f2ff";
-
+            ctx.lineWidth = 2.5;
             for (let i = 0; i < canvas.width; i += 2) {
                 const x = i * 0.05;
-                const y1 = Math.sin(x + time) * 40;
-                const y2 = Math.sin(x * 1.5 + time) * 30;
-                const yFinal = canvas.height / 2 + (y1 * (1 - mix)) + (y2 * mix);
-                
-                if (i === 0) ctx.moveTo(i, yFinal);
-                else ctx.lineTo(i, yFinal);
+                const yFinal = canvas.height / 2 + (Math.sin(x + time) * 50 * (1-mix)) + (Math.sin(x * 1.5 + time) * 40 * mix);
+                i === 0 ? ctx.moveTo(i, yFinal) : ctx.lineTo(i, yFinal);
             }
             ctx.stroke();
-            document.getElementById('val-res').innerText = (mix * 100).toFixed(0) + "% Mix";
-            document.getElementById('val-state').innerText = "Oscillating";
+            document.getElementById('val-res').innerText = (mix * 100).toFixed(0) + " %";
         }
-        
         requestAnimationFrame(renderLoop);
     }
 
-    // --- TUNNELING ENGINE ---
-    let charge = 0;
-    let charging = false;
+    let charge = 0; let charging = false;
     const btnCharge = document.getElementById('btn-charge');
+    btnCharge.addEventListener('mousedown', () => { charging = true; charge = 0; });
+    btnCharge.addEventListener('touchstart', (e) => { e.preventDefault(); charging = true; charge = 0; });
 
-    btnCharge.addEventListener('mousedown', startCharge);
-    btnCharge.addEventListener('touchstart', (e) => { e.preventDefault(); startCharge(); });
-
-    function startCharge() {
-        if(activeTab !== 'tunnel') return;
-        charging = true; charge = 0;
-        const p = document.getElementById('tunnel-particle');
-        p.style.left = "10%";
-        p.style.transition = "none";
-        document.getElementById('val-state').innerText = "Charging...";
-        
-        const loop = setInterval(() => {
-            if(!charging) clearInterval(loop);
+    setInterval(() => {
+        if(charging && activeTab === 'tunnel') {
             charge = Math.min(charge + 2, 100);
             document.getElementById('val-res').innerText = charge + "%";
-        }, 30);
-    }
+        }
+    }, 30);
 
-    function releaseCharge() {
-        if(!charging) return;
-        charging = false;
+    window.addEventListener('mouseup', () => {
+        if(!charging) return; charging = false;
         const p = document.getElementById('tunnel-particle');
-        const success = charge > 70;
-        p.style.transition = "all 0.6s cubic-bezier(0.4, 0, 0.2, 1)";
-        p.style.left = success ? "90%" : "45%";
-        document.getElementById('val-state').innerText = success ? "TUNNELED!" : "REFLECTED";
-    }
-
-    window.addEventListener('mouseup', releaseCharge);
-    window.addEventListener('touchend', releaseCharge);
+        const win = charge > 70;
+        p.style.transition = "all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
+        p.style.left = win ? "90%" : "45%";
+    });
 </script>
 </body>
 </html>
