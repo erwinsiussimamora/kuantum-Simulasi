@@ -2,264 +2,164 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quantum Analytics Pro - v4.5</title>
-    
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Billa Quantum Lab - Fixed Motion</title>
     <style>
-        :root {
-            --bg: #020205;
-            --accent: #00f2ff;
-            --danger: #ff007b;
-            --gold: #ffcc00;
-            --grid: rgba(255, 255, 255, 0.05);
-            --border: rgba(0, 242, 255, 0.2);
-        }
+        :root { --bg: #020205; --accent: #00f2ff; --danger: #ff007b; --gold: #ffcc00; --border: rgba(0, 242, 255, 0.2); }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: white; height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: var(--bg); color: white; height: 100vh; overflow: hidden; }
+        /* Layar Awal */
+        #start-screen { position: fixed; inset: 0; background: #020205; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
+        .btn-start { padding: 15px 40px; font-size: 1rem; color: var(--accent); background: none; border: 2px solid var(--accent); border-radius: 50px; cursor: pointer; font-weight: bold; }
 
-        /* --- START SCREEN --- */
-        #start-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at center, #0a0a25 0%, #020205 100%);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 999; transition: opacity 0.8s ease, visibility 0.8s;
-        }
-        
-        #start-screen.hidden { opacity: 0; visibility: hidden; }
+        nav { display: flex; justify-content: center; gap: 10px; padding: 15px; border-bottom: 1px solid var(--border); }
+        .tab-btn { padding: 10px 20px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #888; border-radius: 8px; cursor: pointer; }
+        .tab-btn.active { color: var(--accent); border-color: var(--accent); background: rgba(0,242,255,0.1); }
 
-        .logo-container {
-            text-align: center; margin-bottom: 40px; animation: pulse 2s infinite;
-        }
-        
-        .logo-container h1 { font-size: 3.5rem; letter-spacing: 10px; color: var(--accent); text-shadow: 0 0 20px var(--accent); }
-        .logo-container p { color: #888; letter-spacing: 3px; margin-top: 10px; }
+        .main-content { flex: 1; display: flex; flex-direction: column; }
+        .canvas-area { flex: 1; position: relative; background: #000; overflow: hidden; }
+        .sidebar { padding: 20px; background: rgba(0,0,0,0.9); border-top: 1px solid var(--border); }
 
-        .btn-start {
-            padding: 15px 40px; font-size: 1.2rem; font-weight: bold; color: var(--accent);
-            background: transparent; border: 2px solid var(--accent); border-radius: 50px;
-            cursor: pointer; transition: 0.4s; position: relative; overflow: hidden;
-        }
-        .btn-start:hover { background: var(--accent); color: black; box-shadow: 0 0 30px var(--accent); }
+        @media (min-width: 768px) { .main-content { flex-direction: row; } .sidebar { width: 320px; border-top: none; border-right: 1px solid var(--border); } }
 
-        @keyframes pulse { 0% { opacity: 0.8; } 50% { opacity: 1; } 100% { opacity: 0.8; } }
-
-        /* --- MAIN APP UI --- */
-        #main-app { display: flex; flex-direction: column; height: 100vh; opacity: 0; transition: opacity 1s ease; }
-        #main-app.visible { opacity: 1; }
-
-        header { padding: 15px; text-align: center; border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.8); }
-        nav { display: flex; justify-content: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.02); }
-        
-        .tab-btn {
-            padding: 10px 20px; background: transparent; border: 1px solid var(--border);
-            color: #666; border-radius: 8px; cursor: pointer; transition: 0.3s; font-weight: bold;
-        }
-        .tab-btn.active { color: var(--accent); border-color: var(--accent); background: rgba(0, 242, 255, 0.1); box-shadow: 0 0 15px var(--accent); }
-
-        .main-content { display: flex; flex: 1; padding: 20px; gap: 20px; overflow: hidden; }
-        .sidebar { width: 320px; display: flex; flex-direction: column; gap: 15px; }
-        
-        .canvas-area { flex: 1; position: relative; background: #000; border-radius: 20px; border: 1px solid var(--border); overflow: hidden; display: flex; }
-
-        /* Labels & Grid */
-        .axis-y { width: 50px; height: 100%; border-right: 1px solid rgba(255,255,255,0.2); display: flex; flex-direction: column; justify-content: space-between; padding: 20px 5px; font-size: 0.7rem; color: #888; text-align: right; }
-        .axis-x { position: absolute; bottom: 0; left: 50px; right: 0; height: 30px; border-top: 1px solid rgba(255,255,255,0.2); display: flex; justify-content: space-between; padding: 5px 20px; font-size: 0.7rem; color: #888; }
-
-        .viz-container { flex: 1; position: relative; margin-bottom: 30px; cursor: crosshair; }
-        .glass-card { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 15px; padding: 20px; backdrop-filter: blur(10px); }
-
-        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-        .data-box { background: rgba(0,0,0,0.4); padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); }
-        .data-label { font-size: 0.6rem; color: #888; text-transform: uppercase; }
-        .data-value { font-size: 0.9rem; color: var(--accent); font-family: monospace; }
-
-        /* Components */
-        .handle { position: absolute; width: 36px; height: 36px; border: 2px solid white; border-radius: 50%; cursor: grab; background: rgba(255,255,255,0.1); z-index: 10; }
-        .energy-line { position: absolute; width: 80%; height: 3px; border-radius: 10px; transition: 0.1s; pointer-events: none; left: 10%; }
-        
-        #btn-charge { width: 100%; padding: 15px; background: var(--gold); color: black; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; display: none; margin-top: 10px; }
-        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        canvas { position: absolute; width: 100%; height: 100%; }
+        .handle { position: absolute; width: 50px; height: 50px; border: 3px solid white; border-radius: 50%; background: rgba(0,242,255,0.4); z-index: 100; touch-action: none; box-shadow: 0 0 20px rgba(255,255,255,0.2); }
+        .energy-line { position: absolute; width: 100%; height: 2px; box-shadow: 0 0 10px currentColor; }
     </style>
 </head>
 <body>
 
 <div id="start-screen">
-    <div class="logo-container">
-        <h1>QUANTUM HUB</h1>
-        <p>ADVANCED ANALYTICS INTERFACE</p>
-    </div>
-    <button class="btn-start" onclick="initLab()">INITIALIZE SYSTEM</button>
-    <div style="margin-top: 20px; color: #444; font-size: 0.8rem;">Ready for Simulation v4.5</div>
+    <h1 style="color:var(--accent); margin-bottom: 20px; letter-spacing: 3px;">QUANTUM CORE</h1>
+    <button class="btn-start" onclick="startApp()">ACTIVATE INTERFACE</button>
 </div>
 
-<div id="main-app">
-    <header>
-        <h2>QUANTUM ANALYTICS <span style="color:var(--accent)">v4.5</span></h2>
-    </header>
+<nav>
+    <button class="tab-btn active" onclick="setTab('kinetic', this)">KINETIC</button>
+    <button class="tab-btn" onclick="setTab('wave', this)">WAVE MOTION</button>
+</nav>
 
-    <nav>
-        <button class="tab-btn active" onclick="switchTab('kinetic', this)">1. KINETIC SPLITTING</button>
-        <button class="tab-btn" onclick="switchTab('wave', this)">2. WAVE COORDINATES</button>
-        <button class="tab-btn" onclick="switchTab('tunnel', this)">3. TUNNELING ESCAPE</button>
-    </nav>
-
-    <div class="main-content">
-        <div class="sidebar">
-            <div class="glass-card">
-                <h3 id="panel-title">Kinetic Analysis</h3>
-                <p id="panel-desc" style="font-size: 0.8rem; color: #aaa; margin: 10px 0;">Analisis kuantitatif pemisahan energi degenerasi.</p>
-                
-                <div class="data-grid">
-                    <div class="data-box"><div class="data-label">E-Upper (eV)</div><div id="val-1" class="data-value">13.60</div></div>
-                    <div class="data-box"><div class="data-label">E-Lower (eV)</div><div id="val-2" class="data-value">13.60</div></div>
-                    <div class="data-box"><div class="data-label">Amplitude</div><div id="val-res" class="data-value">0.00</div></div>
-                    <div class="data-box"><div class="data-label">System State</div><div id="val-state" class="data-value">Stable</div></div>
-                </div>
-                
-                <button id="btn-charge" onmousedown="startCharge()" onmouseup="releaseCharge()">HOLD TO INJECT ENERGY</button>
-                
-                <div id="wave-controls" style="display:none; margin-top:15px;">
-                    <label style="font-size:0.7rem; color:#888;">MIXING RATIO</label>
-                    <input type="range" id="mix-slider" style="width:100%; accent-color:var(--accent)" min="0" max="100" value="50">
-                </div>
-            </div>
-            
-            <div class="glass-card">
-                <h4 style="font-size: 0.8rem; margin-bottom: 5px;">Coordinate Tracker</h4>
-                <p id="mouse-coord" style="font-family: monospace; font-size: 0.8rem; color: var(--accent);">X: 0.00 nm | Y: 0.00 eV</p>
-            </div>
+<div class="main-content">
+    <div class="sidebar">
+        <h2 id="title" style="color:var(--accent)">KINETIC</h2>
+        <div id="wave-ui" style="display:none; margin-top:20px;">
+            <p style="font-size:0.8rem; margin-bottom:10px;">SUPERPOSITION MIXING</p>
+            <input type="range" id="mix" style="width:100%;" value="50">
         </div>
+        <div style="margin-top:30px; padding:15px; background:rgba(255,255,255,0.03); border-radius:10px; font-family:monospace;">
+            STAT_A: <span id="val-a" style="color:var(--gold)">13.60</span><br>
+            STAT_B: <span id="val-b" style="color:var(--gold)">13.60</span>
+        </div>
+    </div>
 
-        <div class="canvas-area" id="stage">
-            <div class="axis-y"><span>20.0</span><span>15.0</span><span>10.0</span><span>5.0</span><span>0.0</span></div>
-            <div class="viz-container" id="viz-box" onmousemove="trackMouse(event)">
-                <div style="position:absolute; width:100%; height:100%; background-image: radial-gradient(var(--grid) 1px, transparent 1px); background-size: 30px 30px;"></div>
-                
-                <div id="viz-kinetic">
-                    <div id="line-up" class="energy-line" style="background:var(--danger); top:50%;"></div>
-                    <div id="line-down" class="energy-line" style="background:var(--accent); top:50%;"></div>
-                    <div id="drag-handle" class="handle" style="top:calc(50% - 18px); left:calc(50% - 18px);"></div>
-                </div>
-                <canvas id="mainCanvas"></canvas>
-                <div id="tunnel-extras" style="display:none;">
-                    <div style="position:absolute; width:40px; height:100%; background:rgba(255,0,123,0.1); border:1px solid var(--danger); left:50%; transform:translateX(-50%);"></div>
-                    <div id="tunnel-particle" style="position:absolute; width:15px; height:15px; background:var(--gold); border-radius:50%; box-shadow:0 0 15px var(--gold); display:none; top:50%;"></div>
-                </div>
-            </div>
-            <div class="axis-x"><span>0.0 nm</span><span>0.25</span><span>0.50</span><span>0.75</span><span>1.0 nm</span></div>
+    <div class="canvas-area" id="stage">
+        <canvas id="c"></canvas>
+        <div id="kinetic-ui">
+            <div id="l-up" class="energy-line" style="background:var(--danger); top:50%;"></div>
+            <div id="l-down" class="energy-line" style="background:var(--accent); top:50%;"></div>
+            <div id="h" class="handle" style="top:calc(50% - 25px); left:calc(50% - 25px);"></div>
         </div>
     </div>
 </div>
 
 <script>
-    // --- LOGIC START SCREEN ---
-    function initLab() {
-        document.getElementById('start-screen').classList.add('hidden');
-        document.getElementById('main-app').classList.add('visible');
-        resizeCanvas();
-    }
-
-    let activeTab = 'kinetic';
-    const vizBox = document.getElementById('viz-box');
-    const handle = document.getElementById('drag-handle');
-    const canvas = document.getElementById('mainCanvas');
+    const canvas = document.getElementById('c');
     const ctx = canvas.getContext('2d');
-    const mixSlider = document.getElementById('mix-slider');
-    const val1 = document.getElementById('val-1');
-    const val2 = document.getElementById('val-2');
-    const valRes = document.getElementById('val-res');
-    const valState = document.getElementById('val-state');
+    const stage = document.getElementById('stage');
+    const handle = document.getElementById('h');
+    let currentMode = 'kinetic';
+    let time = 0;
 
-    function resizeCanvas() {
-        canvas.width = vizBox.clientWidth;
-        canvas.height = vizBox.clientHeight;
+    // 1. Fungsi Start yang membersihkan semua hambatan browser
+    function startApp() {
+        document.getElementById('start-screen').style.display = 'none';
+        resize();
+        window.requestAnimationFrame(update);
     }
-    window.addEventListener('resize', resizeCanvas);
 
-    function switchTab(mode, btn) {
-        activeTab = mode;
+    function resize() {
+        canvas.width = stage.offsetWidth;
+        canvas.height = stage.offsetHeight;
+    }
+    window.addEventListener('resize', resize);
+
+    function setTab(mode, el) {
+        currentMode = mode;
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('viz-kinetic').style.display = (mode === 'kinetic') ? 'block' : 'none';
-        document.getElementById('wave-controls').style.display = (mode === 'wave') ? 'block' : 'none';
-        document.getElementById('btn-charge').style.display = (mode === 'tunnel') ? 'block' : 'none';
-        document.getElementById('tunnel-extras').style.display = (mode === 'tunnel') ? 'block' : 'none';
-        if(mode !== 'kinetic') { resizeCanvas(); renderLoop(); }
+        el.classList.add('active');
+        document.getElementById('title').innerText = mode.toUpperCase();
+        document.getElementById('kinetic-ui').style.display = (mode === 'kinetic') ? 'block' : 'none';
+        document.getElementById('wave-ui').style.display = (mode === 'wave') ? 'block' : 'none';
+        resize();
     }
 
-    // --- 1. KINETIC ---
-    let isDragging = false;
-    handle.onmousedown = () => isDragging = true;
-    window.onmouseup = () => isDragging = false;
-    window.onmousemove = (e) => {
-        if (!isDragging || activeTab !== 'kinetic') return;
-        const rect = vizBox.getBoundingClientRect();
-        let y = Math.max(20, Math.min(rect.height - 20, e.clientY - rect.top));
-        handle.style.top = (y - 18) + 'px';
-        const dist = Math.abs(rect.height/2 - y);
-        document.getElementById('line-up').style.top = (rect.height/2 - dist) + 'px';
-        document.getElementById('line-down').style.top = (rect.height/2 + dist) + 'px';
-        const gap = (dist/15).toFixed(2);
-        valRes.innerText = gap + " eV";
-        val1.innerText = (13.6 + gap/2).toFixed(2);
-        val2.innerText = (13.6 - gap/2).toFixed(2);
-        valState.innerText = dist > 5 ? "Perturbed" : "Stable";
+    // 2. Loop Animasi Utama - Menggunakan Delta Time agar stabil
+    function update(timestamp) {
+        time = timestamp * 0.002; // Variabel waktu yang menggerakkan gelombang
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        if (currentMode === 'wave') {
+            drawWaveAnimation();
+        }
+        
+        window.requestAnimationFrame(update);
+    }
+
+    function drawWaveAnimation() {
+        const mix = document.getElementById('mix').value / 100;
+        const midY = canvas.height / 2;
+        
+        ctx.beginPath();
+        ctx.strokeStyle = '#00f2ff';
+        ctx.lineWidth = 4;
+        ctx.lineJoin = 'round';
+
+        // Efek cahaya (Glow)
+        ctx.shadowBlur = 15;
+        ctx.shadowColor = '#00f2ff';
+
+        for (let i = 0; i < canvas.width; i += 2) {
+            const x = i * 0.03;
+            // Gelombang Dasar 1 & 2
+            const w1 = Math.sin(x + time) * 60;
+            const w2 = Math.sin(x * 1.6 + time) * 40;
+            
+            // Penggabungan (Superposisi)
+            const y = midY + (w1 * (1 - mix)) + (w2 * mix);
+            
+            if (i === 0) ctx.moveTo(i, y);
+            else ctx.lineTo(i, y);
+        }
+        
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+    }
+
+    // 3. Logic Drag & Touch (Fixed for Android)
+    let dragging = false;
+    const move = (e) => {
+        if (!dragging || currentMode !== 'kinetic') return;
+        const r = stage.getBoundingClientRect();
+        const cy = e.touches ? e.touches[0].clientY : e.clientY;
+        let y = Math.max(50, Math.min(r.height - 50, cy - r.top));
+        
+        handle.style.top = (y - 25) + 'px';
+        const d = Math.abs(r.height / 2 - y);
+        document.getElementById('l-up').style.top = (r.height/2 - d) + 'px';
+        document.getElementById('l-down').style.top = (r.height/2 + d) + 'px';
+        document.getElementById('val-a').innerText = (13.6 + d/8).toFixed(2);
+        document.getElementById('val-b').innerText = (13.6 - d/8).toFixed(2);
     };
 
-    // --- 2. WAVE ---
-    function renderLoop() {
-        if(activeTab === 'kinetic') return;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if(activeTab === 'wave') {
-            const mix = mixSlider.value / 100;
-            const time = Date.now() * 0.002;
-            ctx.beginPath();
-            ctx.strokeStyle = "#00f2ff";
-            ctx.lineWidth = 2;
-            for(let i=0; i<canvas.width; i++) {
-                const x = i * 0.05;
-                const y = canvas.height/2 + Math.sin(x + time)*50*(1-mix) + Math.sin(x*1.5 + time)*50*mix;
-                i === 0 ? ctx.moveTo(i, y) : ctx.lineTo(i, y);
-            }
-            ctx.stroke();
-            valRes.innerText = (mixSlider.value).toFixed(0) + " %";
-        }
-        requestAnimationFrame(renderLoop);
-    }
+    handle.addEventListener('mousedown', () => dragging = true);
+    handle.addEventListener('touchstart', (e) => { dragging = true; e.preventDefault(); }, {passive: false});
+    window.addEventListener('mouseup', () => dragging = false);
+    window.addEventListener('touchend', () => dragging = false);
+    window.addEventListener('mousemove', move);
+    window.addEventListener('touchmove', move, {passive: false});
 
-    // --- 3. TUNNELING ---
-    let charge = 0;
-    let charging = false;
-    function startCharge() {
-        charging = true; charge = 0;
-        document.getElementById('tunnel-particle').style.display = 'block';
-        const timer = setInterval(() => {
-            if(!charging) clearInterval(timer);
-            charge = Math.min(charge + 2, 100);
-            valRes.innerText = charge + "% Power";
-        }, 30);
-    }
-
-    function releaseCharge() {
-        charging = false;
-        const p = document.getElementById('tunnel-particle');
-        const success = charge > 65;
-        p.style.transition = "all 0.6s cubic-bezier(0.4, 0, 0.2, 1)";
-        p.style.left = success ? "90%" : "45%";
-        valState.innerText = success ? "Escaped!" : "Reflected";
-        setTimeout(() => { p.style.transition = "none"; p.style.left = "10%"; }, 1500);
-    }
-
-    function trackMouse(e) {
-        const rect = vizBox.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width).toFixed(2);
-        const y = ((1 - (e.clientY - rect.top) / rect.height) * 20).toFixed(2);
-        document.getElementById('mouse-coord').innerText = `X: ${x} nm | Y: ${y} eV`;
-    }
 </script>
 </body>
 </html>
